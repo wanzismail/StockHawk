@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#BF360C</color>
+    <color name="background">#CFD8DC</color>
+
+
+    <color name="material_blue_500">#2196F3</color>
+    <color name="material_red_700">#D50000</color>
+    <color name="material_green_700">#00C853</color>
+    <color name="chart_color">#BBDEFB</color>
+    <color name="yahoo_finance_color">#0a83a5</color>
+    <color name="white">#FFFFFF</color>
+</resources>
