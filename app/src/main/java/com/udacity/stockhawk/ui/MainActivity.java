@@ -2,13 +2,10 @@ package com.udacity.stockhawk.ui;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -17,7 +14,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,15 +25,10 @@ import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
 import com.udacity.stockhawk.sync.QuoteSyncJob;
 import com.udacity.stockhawk.utils.Constants;
-import com.udacity.stockhawk.utils.Utils;
-
-import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
-import yahoofinance.Stock;
-import yahoofinance.YahooFinance;
 
 /**
  * For VELO TEKNOLOGI
@@ -128,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public void onRefresh() {
         if (networkUp()){
-            QuoteSyncJob.syncImmediately(this);
+            QuoteSyncJob.syncImmediately(this, MainActivity.class.getSimpleName());
         }
         else {
             error.setVisibility(View.VISIBLE);
@@ -210,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
 
             PrefUtils.addStock(this, symbol);
-            QuoteSyncJob.syncImmediately(this);
+            QuoteSyncJob.syncImmediately(this, MainActivity.class.getSimpleName());
         }
     }
 

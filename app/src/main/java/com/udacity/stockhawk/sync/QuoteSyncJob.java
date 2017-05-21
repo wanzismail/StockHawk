@@ -1,15 +1,18 @@
 package com.udacity.stockhawk.sync;
 
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.support.annotation.IntDef;
 
+import com.firebase.jobdispatcher.Constraint;
+import com.firebase.jobdispatcher.FirebaseJobDispatcher;
+import com.firebase.jobdispatcher.GooglePlayDriver;
+import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.RetryStrategy;
+import com.firebase.jobdispatcher.Trigger;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
@@ -45,6 +48,14 @@ import static com.udacity.stockhawk.data.PrefUtils.setStockStatus;
  */
 
 public final class QuoteSyncJob {
+
+    public static final String JOB_TAG_ONE_OFF = "job_tag_one_off";
+    public static final String JOB_TAG_PERIODIC = "job_tag_periodic";
+    public static final String JOB_TAG_PERIODIC_WIDGET = "job_tag_periodic_widget";
+
+    public static final int PERIOD_SYNC_WIDGET = 7200;  // 2 hours
+    public static final int PERIOD_SYNC = 30; // 30 seconds
+    private static final int PERIOD_HISTORY = 1; // 1 year
 
     private static final int ONE_OFF_ID = 2;
     private static final String ACTION_DATA_UPDATED = "com.udacity.stockhawk.ACTION_DATA_UPDATED";
@@ -181,53 +192,58 @@ public final class QuoteSyncJob {
         }
     }
 
-    private static void schedulePeriodic(Context context) {
-        Timber.d("Scheduling a periodic task");
-
-
-        JobInfo.Builder builder = new JobInfo.Builder(PERIODIC_ID, new ComponentName(context, QuoteJobService.class));
-
-
-        builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setPeriodic(PERIOD)
-                .setBackoffCriteria(INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_EXPONENTIAL);
-
-
-        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-
-        scheduler.schedule(builder.build());
-    }
-
-
     public static synchronized void initialize(final Context context) {
 
-        schedulePeriodic(context);
-        syncImmediately(context);
+        syncImmediately(context, QuoteSyncJob.JOB_TAG_ONE_OFF);
+        schedulePeriodic(context, QuoteSyncJob.JOB_TAG_PERIODIC, QuoteSyncJob.PERIOD_SYNC);
     }
 
-    public static synchronized void syncImmediately(Context context) {
+    public static void schedulePeriodic(Context context, String tag, int period) {
+        Timber.d("Scheduling a periodic sync every " + period + " seconds");
 
-        ConnectivityManager cm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
-            Intent nowIntent = new Intent(context, QuoteIntentService.class);
-            context.startService(nowIntent);
-        } else {
+        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(context));
 
-            JobInfo.Builder builder = new JobInfo.Builder(ONE_OFF_ID, new ComponentName(context, QuoteJobService.class));
+        Job myJob = dispatcher.newJobBuilder()
+                .setService(QuoteJobService.class)
+                .setTag(tag)
+                .setRecurring(true)
+                .setTrigger(Trigger.executionWindow(period, period))
+                .setLifetime(Lifetime.UNTIL_NEXT_BOOT)
+                .setConstraints(Constraint.ON_ANY_NETWORK)
+                .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
+                .setReplaceCurrent(true)
+                .build();
 
+        dispatcher.mustSchedule(myJob);
+    }
 
-            builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                    .setBackoffCriteria(INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_EXPONENTIAL);
+    synchronized public static void syncImmediately(Context context, String tag) {
+        Timber.d("Scheduling a immediate sync");
 
+        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver
+                (context));
 
-            JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        Bundle bundle = new Bundle();
+        Job myJob = dispatcher.newJobBuilder()
+                .setService(QuoteJobService.class)
+                .setTag(tag)
+                .setExtras(bundle)
+                .setRecurring(false)
+                .setTrigger(Trigger.executionWindow(0, 0))
+                .setLifetime(Lifetime.UNTIL_NEXT_BOOT)
+                .setConstraints(Constraint.ON_ANY_NETWORK)
+                .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
+                .setReplaceCurrent(true)
+                .build();
 
-            scheduler.schedule(builder.build());
+        dispatcher.mustSchedule(myJob);
 
+    }
 
-        }
+    synchronized public static void stopSyncJob(final Context context, String tag) {
+        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver
+                (context));
+        dispatcher.cancel(tag);
     }
 
 }
