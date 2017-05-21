@@ -43,7 +43,7 @@
     <string name="a11y_fab_add_stock" translatable="false">Add a new Stock.</string>
 
     <!--widget-->
-    <string name="title_widget_quotes">Quotes details</string>
+    <string name="title_widget_quotes">Stock Hawk</string>
     <string name="appwidget_text">EXAMPLE</string>
     <string name="add_widget">Add widget</string>
 
