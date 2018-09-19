@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.udacity.stockhawk">
+    package="com.wanztudio.iak.stockhawk">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -29,7 +29,7 @@
 
         <provider
             android:name=".data.StockProvider"
-            android:authorities="com.udacity.stockhawk"
+            android:authorities="com.wanztudio.iak.stockhawk"
             android:exported="false" />
 
         <service
@@ -41,7 +41,7 @@
         </service>
 
         <service
-            android:name="com.udacity.stockhawk.widget.QuoteWidgetRemoteViewsService"
+            android:name="com.wanztudio.iak.stockhawk.widget.QuoteWidgetRemoteViewsService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS"/>
 
@@ -53,7 +53,7 @@
             android:label="@string/title_widget_quotes">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.udacity.stockhawk.ACTION_DATA_UPDATED" />
+                <action android:name="com.wanztudio.iak.stockhawk.ACTION_DATA_UPDATED" />
             </intent-filter>
 
             <meta-data
